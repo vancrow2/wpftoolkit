@@ -1,0 +1,87 @@
+<Window x:Class="InfoScopeDeveloperToolkit.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="InfoScope Developer Tool-Kit" Height="680" Width="1100"
+        WindowStartupLocation="CenterScreen">
+    <TabControl>
+        <TabItem Header="Eszközök">
+            <Grid Margin="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="250" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" BorderBrush="#DDD" BorderThickness="1" Padding="8">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" FontWeight="Bold" FontSize="15" Text="Elérhető eszközök" Margin="0,0,0,10"/>
+                        <ListBox ItemsSource="{Binding Tools}" SelectedItem="{Binding SelectedTool}" DisplayMemberPath="Name"/>
+                    </DockPanel>
+                </Border>
+
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="180"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock FontSize="18" FontWeight="Bold" Text="{Binding SelectedTool.Name}"/>
+                    <TextBlock Grid.Row="1" TextWrapping="Wrap" Margin="0,4,0,12" Text="{Binding SelectedTool.Description}"/>
+
+                    <Border Grid.Row="2" BorderBrush="#DDD" BorderThickness="1" Padding="8">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" FontWeight="SemiBold" Margin="0,0,0,6" Text="Paraméterek"/>
+                            <DataGrid ItemsSource="{Binding Parameters}" AutoGenerateColumns="False" HeadersVisibility="Column" CanUserAddRows="False">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Kulcs" Binding="{Binding Key}" IsReadOnly="True" Width="180" />
+                                    <DataGridTextColumn Header="Megnevezés" Binding="{Binding DisplayName}" IsReadOnly="True" Width="200" />
+                                    <DataGridTextColumn Header="Érték" Binding="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Width="*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </DockPanel>
+                    </Border>
+
+                    <Border Grid.Row="3" Margin="0,10,0,0" BorderBrush="#DDD" BorderThickness="1" Padding="8">
+                        <DockPanel>
+                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,6">
+                                <TextBlock Text="Napló konzol" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <Button Content="Napló másolása" Margin="10,0,0,0" Padding="10,2" Command="{Binding CopyLogCommand}"/>
+                            </StackPanel>
+                            <TextBox Text="{Binding LogText}" IsReadOnly="True" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"/>
+                        </DockPanel>
+                    </Border>
+
+                    <StackPanel Grid.Row="4" Margin="0,10,0,0">
+                        <ProgressBar Height="20" Minimum="0" Maximum="100" Value="{Binding ProgressPercentage}"/>
+                        <TextBlock Text="{Binding StatusText}" Margin="0,3,0,8"/>
+                        <WrapPanel>
+                            <Button Content="Futtatás" Width="120" Command="{Binding RunToolCommand}" IsEnabled="{Binding IsNotRunning}"/>
+                            <Button Content="Megszakítás" Width="120" Margin="8,0,0,0" Command="{Binding CancelToolCommand}" IsEnabled="{Binding IsRunning}"/>
+                            <Button Content="Beállítások mentése" Width="150" Margin="8,0,0,0" Command="{Binding SaveSettingsCommand}"/>
+                            <Button Content="Diagnosztikai csomag exportálása" Width="230" Margin="8,0,0,0" Command="{Binding ExportDiagnosticPackageCommand}"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </TabItem>
+
+        <TabItem Header="Beállítások">
+            <Grid Margin="12">
+                <StackPanel>
+                    <TextBlock FontSize="16" FontWeight="Bold" Text="Alkalmazás beállítások"/>
+                    <TextBlock Margin="0,10,0,4" Text="A beállítások helye:"/>
+                    <TextBox IsReadOnly="True" Text="{Binding SettingsFilePath}" />
+                    <TextBlock Margin="0,10,0,4" Text="Utoljára kiválasztott eszköz:"/>
+                    <TextBox IsReadOnly="True" Text="{Binding SelectedTool.Name}" />
+                    <Button Content="Beállítások mentése" Margin="0,14,0,0" Width="180" Command="{Binding SaveSettingsCommand}" />
+                </StackPanel>
+            </Grid>
+        </TabItem>
+    </TabControl>
+</Window>
