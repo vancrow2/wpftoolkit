@@ -1,6 +1,7 @@
 using InfoScopeDeveloperToolkit.Core.Abstractions;
 using InfoScopeDeveloperToolkit.Core.Services;
 using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
 
 namespace InfoScopeDeveloperToolkit.Tests.Core;
 

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Serilog;
 using InfoScopeDeveloperToolkit.Core.Services;
 using InfoScopeDeveloperToolkit.App.ViewModels;
+using System.IO;
 
 namespace InfoScopeDeveloperToolkit.App;
 
