@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "PGyzjmnQikI=",
+  "success": true,
+  "projectFilePath": "E:\\work\\tool\\Tools.Sample\\Tools.Sample.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Erdei Imre\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\8.0.2\\microsoft.extensions.dependencyinjection.abstractions.8.0.2.nupkg.sha512",
+    "C:\\Users\\Erdei Imre\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\8.0.2\\microsoft.extensions.logging.abstractions.8.0.2.nupkg.sha512"
+  ],
+  "logs": []
+}
