@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Tools.Sample")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+712e3f1d3ebad8e6d6b2701b619d187a7750e3f9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+41c7d4e32a1f2180e2cebc6503c67a5736a42e69")]
 [assembly: System.Reflection.AssemblyProductAttribute("Tools.Sample")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Tools.Sample")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
