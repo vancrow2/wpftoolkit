@@ -76,9 +76,9 @@
                 <StackPanel>
                     <TextBlock FontSize="16" FontWeight="Bold" Text="Alkalmazás beállítások"/>
                     <TextBlock Margin="0,10,0,4" Text="A beállítások helye:"/>
-                    <TextBox IsReadOnly="True" Text="{Binding SettingsFilePath}" />
+                    <TextBox IsReadOnly="True" Text="{Binding SettingsFilePath, Mode=OneWay}" />
                     <TextBlock Margin="0,10,0,4" Text="Utoljára kiválasztott eszköz:"/>
-                    <TextBox IsReadOnly="True" Text="{Binding SelectedTool.Name}" />
+                    <TextBox IsReadOnly="True" Text="{Binding SelectedTool.Name, Mode=OneWay}" />
                     <Button Content="Beállítások mentése" Margin="0,14,0,0" Width="180" Command="{Binding SaveSettingsCommand}" />
                 </StackPanel>
             </Grid>
