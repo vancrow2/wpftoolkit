@@ -6,6 +6,9 @@
         mc:Ignorable="d"
         Title="InfoScope Developer Tool-Kit" Height="680" Width="1100"
         WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </Window.Resources>
     <TabControl>
         <TabItem Header="Eszközök">
             <Grid Margin="10">
@@ -34,7 +37,8 @@
                     <TextBlock FontSize="18" FontWeight="Bold" Text="{Binding SelectedTool.Name}"/>
                     <TextBlock Grid.Row="1" TextWrapping="Wrap" Margin="0,4,0,12" Text="{Binding SelectedTool.Description}"/>
 
-                    <Border Grid.Row="2" BorderBrush="#DDD" BorderThickness="1" Padding="8">
+                    <Border Grid.Row="2" BorderBrush="#DDD" BorderThickness="1" Padding="8"
+                            Visibility="{Binding IsStandardToolSelected, Converter={StaticResource BoolToVisibilityConverter}}">
                         <DockPanel>
                             <TextBlock DockPanel.Dock="Top" FontWeight="SemiBold" Margin="0,0,0,6" Text="Paraméterek"/>
                             <DataGrid ItemsSource="{Binding Parameters}" AutoGenerateColumns="False" HeadersVisibility="Column" CanUserAddRows="False">
@@ -45,6 +49,64 @@
                                 </DataGrid.Columns>
                             </DataGrid>
                         </DockPanel>
+                    </Border>
+
+                    <Border Grid.Row="2" BorderBrush="#DDD" BorderThickness="1" Padding="8"
+                            Visibility="{Binding IsErrorThreadSummaryToolSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                                <TextBlock DockPanel.Dock="Top" FontWeight="SemiBold" Margin="0,0,0,4" Text="Input log"/>
+                                <TextBox Text="{Binding ErrorThreadInputLog, UpdateSourceTrigger=PropertyChanged}"
+                                         AcceptsReturn="True" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"/>
+                            </DockPanel>
+
+                            <WrapPanel Grid.Row="1" Margin="0,2,0,8">
+                                <Button Content="Feldolgozás" Width="120" Command="{Binding ProcessErrorThreadSummaryCommand}" IsEnabled="{Binding IsNotRunning}"/>
+                                <Button Content="Copy output" Width="120" Margin="8,0,0,0" Command="{Binding CopyErrorThreadSummaryOutputCommand}"/>
+                                <Button Content="Export (txt fájl)" Width="140" Margin="8,0,0,0" Command="{Binding ExportErrorThreadSummaryOutputCommand}"/>
+                            </WrapPanel>
+
+                            <DockPanel Grid.Row="2">
+                                <TextBlock DockPanel.Dock="Top" FontWeight="SemiBold" Margin="0,0,0,4" Text="Eredmény"/>
+                                <TextBox Text="{Binding ErrorThreadOutput}" IsReadOnly="True"
+                                         AcceptsReturn="True" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"/>
+                            </DockPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="2" BorderBrush="#DDD" BorderThickness="1" Padding="8"
+                            Visibility="{Binding IsBase64ToolSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                                <TextBlock DockPanel.Dock="Top" FontWeight="SemiBold" Margin="0,0,0,4" Text="Input"/>
+                                <TextBox Text="{Binding Base64InputText, UpdateSourceTrigger=PropertyChanged}"
+                                         AcceptsReturn="True" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"/>
+                            </DockPanel>
+
+                            <WrapPanel Grid.Row="1" Margin="0,2,0,8">
+                                <Button Content="Enkódolás" Width="120" Command="{Binding EncodeBase64Command}"/>
+                                <Button Content="Dekódolás" Width="120" Margin="8,0,0,0" Command="{Binding DecodeBase64Command}"/>
+                                <Button Content="Ellenőrzés" Width="120" Margin="8,0,0,0" Command="{Binding ValidateBase64Command}"/>
+                            </WrapPanel>
+
+                            <DockPanel Grid.Row="2">
+                                <TextBlock DockPanel.Dock="Top" FontWeight="SemiBold" Margin="0,0,0,4" Text="Output"/>
+                                <TextBox Text="{Binding Base64OutputText}" IsReadOnly="True"
+                                         AcceptsReturn="True" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"/>
+                            </DockPanel>
+                        </Grid>
                     </Border>
 
                     <Border Grid.Row="3" Margin="0,10,0,0" BorderBrush="#DDD" BorderThickness="1" Padding="8">

@@ -30,6 +30,7 @@ public partial class App : Application
         services.AddSingleton<ISettingsService>(_ => new JsonSettingsService());
         services.AddSingleton<IToolCatalog, ReflectionToolCatalog>();
         services.AddSingleton<ToolRunner>();
+        services.AddSingleton<IErrorThreadSummaryService, ErrorThreadSummaryService>();
         services.AddSingleton<IDiagnosticExportService>(sp =>
             new DiagnosticExportService(sp.GetRequiredService<ISettingsService>(), logsPath));
 

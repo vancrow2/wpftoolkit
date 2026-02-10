@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
 using System.Windows;
+using Microsoft.Win32;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using InfoScopeDeveloperToolkit.Core.Abstractions;
@@ -16,6 +17,7 @@ public partial class MainViewModel : ObservableObject
     private readonly ISettingsService _settingsService;
     private readonly ToolRunner _toolRunner;
     private readonly IDiagnosticExportService _diagnosticExportService;
+    private readonly IErrorThreadSummaryService _errorThreadSummaryService;
     private CancellationTokenSource? _cts;
 
     public ObservableCollection<ToolItemViewModel> Tools { get; } = [];
@@ -36,6 +38,26 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool isRunning;
 
+    [ObservableProperty]
+    private string errorThreadInputLog = string.Empty;
+
+    [ObservableProperty]
+    private string errorThreadOutput = string.Empty;
+
+    [ObservableProperty]
+    private string base64InputText = string.Empty;
+
+    [ObservableProperty]
+    private string base64OutputText = string.Empty;
+
+    public bool IsErrorThreadSummaryToolSelected =>
+        SelectedTool?.Id.Equals("error-thread-summary", StringComparison.OrdinalIgnoreCase) == true;
+
+    public bool IsBase64ToolSelected =>
+        SelectedTool?.Id.Equals("base64-encode-decode", StringComparison.OrdinalIgnoreCase) == true;
+
+    public bool IsStandardToolSelected => !IsErrorThreadSummaryToolSelected && !IsBase64ToolSelected;
+
     public bool IsNotRunning => !IsRunning;
     public string SettingsFilePath => _settingsService.SettingsFilePath;
 
@@ -43,12 +65,14 @@ public partial class MainViewModel : ObservableObject
         IToolCatalog toolCatalog,
         ISettingsService settingsService,
         ToolRunner toolRunner,
-        IDiagnosticExportService diagnosticExportService)
+        IDiagnosticExportService diagnosticExportService,
+        IErrorThreadSummaryService errorThreadSummaryService)
     {
         _toolCatalog = toolCatalog;
         _settingsService = settingsService;
         _toolRunner = toolRunner;
         _diagnosticExportService = diagnosticExportService;
+        _errorThreadSummaryService = errorThreadSummaryService;
     }
 
     public async Task InitializeAsync()
@@ -69,6 +93,10 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnSelectedToolChanged(ToolItemViewModel? value)
     {
+        OnPropertyChanged(nameof(IsErrorThreadSummaryToolSelected));
+        OnPropertyChanged(nameof(IsBase64ToolSelected));
+        OnPropertyChanged(nameof(IsStandardToolSelected));
+
         if (value is null)
         {
             Parameters.Clear();
@@ -108,6 +136,18 @@ public partial class MainViewModel : ObservableObject
     {
         if (SelectedTool is null)
         {
+            return;
+        }
+
+        if (IsErrorThreadSummaryToolSelected)
+        {
+            await ProcessErrorThreadSummaryAsync();
+            return;
+        }
+
+        if (IsBase64ToolSelected)
+        {
+            StatusText = "A BASE64 eszköznél használd az Enkódolás / Dekódolás gombokat.";
             return;
         }
 
@@ -171,11 +211,112 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task ProcessErrorThreadSummaryAsync()
+    {
+        IsRunning = true;
+        StatusText = "Error thread kivonat készítése folyamatban...";
+
+        try
+        {
+            var input = ErrorThreadInputLog;
+            var result = await Task.Run(() => _errorThreadSummaryService.CreateSummary(input));
+            ErrorThreadOutput = result;
+            StatusText = "Error thread kivonat elkészült.";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Hiba a feldolgozás közben: {ex.Message}";
+        }
+        finally
+        {
+            IsRunning = false;
+        }
+    }
+
+    [RelayCommand]
+    private void CopyErrorThreadSummaryOutput()
+    {
+        Clipboard.SetText(ErrorThreadOutput ?? string.Empty);
+        StatusText = "Kimenet másolva a vágólapra.";
+    }
+
+    [RelayCommand]
+    private async Task ExportErrorThreadSummaryOutputAsync()
+    {
+        var saveDialog = new SaveFileDialog
+        {
+            Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*",
+            FileName = "error-thread-kivonat.txt"
+        };
+
+        if (saveDialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        await File.WriteAllTextAsync(saveDialog.FileName, ErrorThreadOutput ?? string.Empty, Encoding.UTF8);
+        StatusText = $"Kimenet exportálva: {saveDialog.FileName}";
+    }
+
+
+    [RelayCommand]
+    private void EncodeBase64()
+    {
+        var input = Base64InputText ?? string.Empty;
+        var bytes = Encoding.UTF8.GetBytes(input);
+        Base64OutputText = Convert.ToBase64String(bytes);
+        StatusText = "Enkódolás kész.";
+    }
+
+    [RelayCommand]
+    private void DecodeBase64()
+    {
+        var input = (Base64InputText ?? string.Empty).Trim();
+        if (!TryDecodeBase64(input, out var decodedText))
+        {
+            StatusText = "A bemenet nem érvényes Base64.";
+            return;
+        }
+
+        Base64OutputText = decodedText;
+        StatusText = "Dekódolás kész.";
+    }
+
+    [RelayCommand]
+    private void ValidateBase64()
+    {
+        var input = (Base64InputText ?? string.Empty).Trim();
+        var isValid = TryDecodeBase64(input, out _);
+        StatusText = isValid ? "A bemenet érvényes Base64." : "A bemenet nem érvényes Base64.";
+    }
+
+    [RelayCommand]
     private async Task ExportDiagnosticPackageAsync()
     {
         var outputDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "InfoScopeDiagnostics");
         var zipPath = await _diagnosticExportService.ExportAsync(outputDir);
         StatusText = $"Diagnosztikai csomag elkészült: {zipPath}";
+    }
+
+
+    private static bool TryDecodeBase64(string input, out string decodedText)
+    {
+        decodedText = string.Empty;
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return false;
+        }
+
+        try
+        {
+            var bytes = Convert.FromBase64String(input);
+            decodedText = Encoding.UTF8.GetString(bytes);
+            return true;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
     }
 
     private void LoadParameterEditors(AppSettings settings)
