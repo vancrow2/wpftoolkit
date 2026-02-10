@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using InfoScopeDeveloperToolkit.Core.Abstractions;
+using Microsoft.Extensions.Logging;
 
 namespace InfoScopeDeveloperToolkit.Tools.Sample.Tools;
 

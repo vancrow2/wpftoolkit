@@ -1,5 +1,6 @@
 using InfoScopeDeveloperToolkit.Core.Models;
 using InfoScopeDeveloperToolkit.Core.Services;
+using Xunit;
 
 namespace InfoScopeDeveloperToolkit.Tests.Core;
 
