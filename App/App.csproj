@@ -22,13 +22,8 @@
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
   </ItemGroup>
 
-  <Target Name="CopyToolsOnBuild" AfterTargets="Build">
+  <Target Name="CopyTools" AfterTargets="Build">
     <MakeDir Directories="$(OutDir)tools" />
     <Copy SourceFiles="..\Tools.Sample\bin\$(Configuration)\net8.0\Tools.Sample.dll" DestinationFolder="$(OutDir)tools" SkipUnchangedFiles="true" Condition="Exists('..\Tools.Sample\bin\$(Configuration)\net8.0\Tools.Sample.dll')" />
-  </Target>
-
-  <Target Name="CopyToolsOnPublish" AfterTargets="Publish">
-    <MakeDir Directories="$(PublishDir)tools" />
-    <Copy SourceFiles="..\Tools.Sample\bin\$(Configuration)\net8.0\Tools.Sample.dll" DestinationFolder="$(PublishDir)tools" SkipUnchangedFiles="true" Condition="Exists('..\Tools.Sample\bin\$(Configuration)\net8.0\Tools.Sample.dll')" />
   </Target>
 </Project>

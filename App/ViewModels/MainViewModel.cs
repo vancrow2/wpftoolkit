@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -14,7 +15,6 @@ public partial class MainViewModel : ObservableObject
     private readonly ISettingsService _settingsService;
     private readonly ToolRunner _toolRunner;
     private readonly IDiagnosticExportService _diagnosticExportService;
-    private readonly Dictionary<string, Dictionary<string, string>> _toolParameterCache = new(StringComparer.OrdinalIgnoreCase);
     private CancellationTokenSource? _cts;
 
     public ObservableCollection<ToolItemViewModel> Tools { get; } = [];
@@ -62,19 +62,30 @@ public partial class MainViewModel : ObservableObject
         }
 
         var settings = await _settingsService.LoadAsync();
-        foreach (var entry in settings.ToolParameters)
-        {
-            _toolParameterCache[entry.Key] = new Dictionary<string, string>(entry.Value, StringComparer.OrdinalIgnoreCase);
-        }
-
         SelectedTool = Tools.FirstOrDefault(t => t.Id == settings.LastSelectedToolId) ?? Tools.FirstOrDefault();
-        LoadParameterEditors(SelectedTool);
+        LoadParameterEditors(settings);
     }
 
     partial void OnSelectedToolChanged(ToolItemViewModel? value)
     {
-        PersistCurrentParameters();
-        LoadParameterEditors(value);
+        if (value is null)
+        {
+            Parameters.Clear();
+            return;
+        }
+
+        var current = Parameters.ToDictionary(p => p.Key, p => p.Value, StringComparer.OrdinalIgnoreCase);
+        Parameters.Clear();
+        foreach (var definition in value.Descriptor.Parameters)
+        {
+            Parameters.Add(new ToolParameterViewModel
+            {
+                Key = definition.Key,
+                DisplayName = definition.DisplayName,
+                Description = definition.Description,
+                Value = current.GetValueOrDefault(definition.Key, string.Empty)
+            });
+        }
     }
 
     partial void OnIsRunningChanged(bool value)
@@ -91,38 +102,11 @@ public partial class MainViewModel : ObservableObject
     private Dictionary<string, string> GetParameterValues() =>
         Parameters.ToDictionary(p => p.Key, p => p.Value ?? string.Empty, StringComparer.OrdinalIgnoreCase);
 
-    private void PersistCurrentParameters()
-    {
-        if (SelectedTool is null)
-        {
-            return;
-        }
-
-        _toolParameterCache[SelectedTool.Id] = GetParameterValues();
-    }
-
-    private static string[] ValidateRequiredParameters(ToolItemViewModel selectedTool, IReadOnlyDictionary<string, string> parameters)
-    {
-        return selectedTool.Descriptor.Parameters
-            .Where(d => d.IsRequired && string.IsNullOrWhiteSpace(parameters.GetValueOrDefault(d.Key)))
-            .Select(d => d.DisplayName)
-            .ToArray();
-    }
-
     [RelayCommand]
     private async Task RunToolAsync()
     {
         if (SelectedTool is null)
         {
-            StatusText = "Nincs kiválasztott eszköz.";
-            return;
-        }
-
-        var parameterValues = GetParameterValues();
-        var missingParameters = ValidateRequiredParameters(SelectedTool, parameterValues);
-        if (missingParameters.Length > 0)
-        {
-            StatusText = $"Hiányzó kötelező paraméter(ek): {string.Join(", ", missingParameters)}";
             return;
         }
 
@@ -139,8 +123,7 @@ public partial class MainViewModel : ObservableObject
 
         try
         {
-            PersistCurrentParameters();
-            await _toolRunner.RunAsync(SelectedTool.Descriptor.Instance, parameterValues, progress, AppendLog, _cts.Token);
+            await _toolRunner.RunAsync(SelectedTool.Descriptor.Instance, GetParameterValues(), progress, AppendLog, _cts.Token);
             StatusText = "Futtatás befejezve.";
         }
         catch (OperationCanceledException)
@@ -168,16 +151,12 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task SaveSettingsAsync()
     {
-        PersistCurrentParameters();
-
-        var settings = new AppSettings
+        var settings = await _settingsService.LoadAsync();
+        settings.LastSelectedToolId = SelectedTool?.Id;
+        if (SelectedTool is not null)
         {
-            LastSelectedToolId = SelectedTool?.Id,
-            ToolParameters = _toolParameterCache.ToDictionary(
-                kvp => kvp.Key,
-                kvp => new Dictionary<string, string>(kvp.Value, StringComparer.OrdinalIgnoreCase),
-                StringComparer.OrdinalIgnoreCase)
-        };
+            settings.ToolParameters[SelectedTool.Id] = GetParameterValues();
+        }
 
         await _settingsService.SaveAsync(settings);
         StatusText = "Beállítások mentve.";
@@ -198,18 +177,18 @@ public partial class MainViewModel : ObservableObject
         StatusText = $"Diagnosztikai csomag elkészült: {zipPath}";
     }
 
-    private void LoadParameterEditors(ToolItemViewModel? tool)
+    private void LoadParameterEditors(AppSettings settings)
     {
-        Parameters.Clear();
-        if (tool is null)
+        if (SelectedTool is null)
         {
             return;
         }
 
-        var savedValues = _toolParameterCache.GetValueOrDefault(tool.Id)
+        var savedValues = settings.ToolParameters.GetValueOrDefault(SelectedTool.Id)
             ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var definition in tool.Descriptor.Parameters)
+        Parameters.Clear();
+        foreach (var definition in SelectedTool.Descriptor.Parameters)
         {
             Parameters.Add(new ToolParameterViewModel
             {
