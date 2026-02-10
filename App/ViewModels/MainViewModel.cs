@@ -44,10 +44,19 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string errorThreadOutput = string.Empty;
 
+    [ObservableProperty]
+    private string base64InputText = string.Empty;
+
+    [ObservableProperty]
+    private string base64OutputText = string.Empty;
+
     public bool IsErrorThreadSummaryToolSelected =>
         SelectedTool?.Id.Equals("error-thread-summary", StringComparison.OrdinalIgnoreCase) == true;
 
-    public bool IsStandardToolSelected => !IsErrorThreadSummaryToolSelected;
+    public bool IsBase64ToolSelected =>
+        SelectedTool?.Id.Equals("base64-encode-decode", StringComparison.OrdinalIgnoreCase) == true;
+
+    public bool IsStandardToolSelected => !IsErrorThreadSummaryToolSelected && !IsBase64ToolSelected;
 
     public bool IsNotRunning => !IsRunning;
     public string SettingsFilePath => _settingsService.SettingsFilePath;
@@ -85,6 +94,7 @@ public partial class MainViewModel : ObservableObject
     partial void OnSelectedToolChanged(ToolItemViewModel? value)
     {
         OnPropertyChanged(nameof(IsErrorThreadSummaryToolSelected));
+        OnPropertyChanged(nameof(IsBase64ToolSelected));
         OnPropertyChanged(nameof(IsStandardToolSelected));
 
         if (value is null)
@@ -132,6 +142,12 @@ public partial class MainViewModel : ObservableObject
         if (IsErrorThreadSummaryToolSelected)
         {
             await ProcessErrorThreadSummaryAsync();
+            return;
+        }
+
+        if (IsBase64ToolSelected)
+        {
+            StatusText = "A BASE64 eszköznél használd az Enkódolás / Dekódolás gombokat.";
             return;
         }
 
@@ -242,12 +258,65 @@ public partial class MainViewModel : ObservableObject
         StatusText = $"Kimenet exportálva: {saveDialog.FileName}";
     }
 
+
+    [RelayCommand]
+    private void EncodeBase64()
+    {
+        var input = Base64InputText ?? string.Empty;
+        var bytes = Encoding.UTF8.GetBytes(input);
+        Base64OutputText = Convert.ToBase64String(bytes);
+        StatusText = "Enkódolás kész.";
+    }
+
+    [RelayCommand]
+    private void DecodeBase64()
+    {
+        var input = (Base64InputText ?? string.Empty).Trim();
+        if (!TryDecodeBase64(input, out var decodedText))
+        {
+            StatusText = "A bemenet nem érvényes Base64.";
+            return;
+        }
+
+        Base64OutputText = decodedText;
+        StatusText = "Dekódolás kész.";
+    }
+
+    [RelayCommand]
+    private void ValidateBase64()
+    {
+        var input = (Base64InputText ?? string.Empty).Trim();
+        var isValid = TryDecodeBase64(input, out _);
+        StatusText = isValid ? "A bemenet érvényes Base64." : "A bemenet nem érvényes Base64.";
+    }
+
     [RelayCommand]
     private async Task ExportDiagnosticPackageAsync()
     {
         var outputDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "InfoScopeDiagnostics");
         var zipPath = await _diagnosticExportService.ExportAsync(outputDir);
         StatusText = $"Diagnosztikai csomag elkészült: {zipPath}";
+    }
+
+
+    private static bool TryDecodeBase64(string input, out string decodedText)
+    {
+        decodedText = string.Empty;
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return false;
+        }
+
+        try
+        {
+            var bytes = Convert.FromBase64String(input);
+            decodedText = Encoding.UTF8.GetString(bytes);
+            return true;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
     }
 
     private void LoadParameterEditors(AppSettings settings)
