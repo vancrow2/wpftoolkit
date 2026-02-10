@@ -65,6 +65,12 @@ public sealed class ErrorThreadSummaryService : IErrorThreadSummaryService
             sb.AppendLine($"- Utolsó Error: {thread.LastErrorLine ?? "n/a"}");
             sb.AppendLine($"- Exception eleje: {thread.ExceptionLineStart ?? "n/a"}");
             sb.AppendLine();
+            sb.AppendLine($"Érintett napló sorok (ThreadId: {thread.ThreadId}):");
+            for (var lineIndex = 0; lineIndex < thread.Lines.Count; lineIndex++)
+            {
+                sb.AppendLine($"{lineIndex + 1}. {thread.Lines[lineIndex].Raw}");
+            }
+            sb.AppendLine();
         }
 
         return sb.ToString();
